@@ -62,10 +62,14 @@ export async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. Admin Security Gate (Saksham's Email)
+    // 3. Admin Security Gate (Saksham & College Email)
     if (url.pathname.startsWith('/admin')) {
-        const ADMIN_EMAIL = 'sakshamsharma614@gmail.com'
-        if (user?.email !== ADMIN_EMAIL) {
+        const ADMIN_EMAILS = [
+            'sakshamsharma614@gmail.com',
+            'adsechristuniversity400@gmail.com'
+        ]
+
+        if (!user?.email || !ADMIN_EMAILS.includes(user.email)) {
             url.pathname = '/home'
             return NextResponse.redirect(url)
         }
