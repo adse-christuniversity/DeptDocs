@@ -120,7 +120,7 @@ export default function DashboardPage() {
                 {/* Top Navigation */}
                 <header className="h-20 bg-white border-b border-gray-200 flex items-center justify-between px-10 shrink-0 relative z-40">
                     <h2 className="text-gray-500 font-bold text-sm uppercase tracking-wider">
-                        Department of AI, ML & Data Science
+                        Department of AI & Data Science
                     </h2>
 
                     <div className="flex items-center space-x-6">
