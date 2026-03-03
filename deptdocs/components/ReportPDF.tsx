@@ -164,9 +164,9 @@ export const ReportPDF = ({ data }: { data: any }) => {
         <Document>
             <Page size="A4" style={styles.page}>
                 <View style={styles.headerContainer} wrap={false}>
-                    <Text style={styles.uniName}>CHRIST (Deemed to be University), Bangalore</Text>
+                    <Text style={styles.uniName}>CHRIST (Deemed to be University)</Text>
                     <Text style={styles.schoolName}>School of Engineering and Technology</Text>
-                    <Text style={styles.deptName}>Department of AI, ML & Data Science</Text>
+                    <Text style={styles.deptName}>Department of AI & Data Science</Text>
                     <Text style={styles.reportTitle}>ACTIVITY REPORT</Text>
                 </View>
 
