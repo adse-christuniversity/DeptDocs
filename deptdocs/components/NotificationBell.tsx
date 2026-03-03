@@ -5,8 +5,20 @@ import { createClient } from '@/utils/supabase/client'
 import { Bell, CheckCircle2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
+// --- TYPESCRIPT INTERFACE ---
+interface Notification {
+    id: string;
+    user_id: string;
+    title: string;
+    message?: string;
+    link?: string;
+    is_read: boolean;
+    created_at: string;
+}
+
 export default function NotificationBell() {
-    const [notifications, setNotifications] = useState<any[]>([])
+    // Apply the interface here instead of <any[]>
+    const [notifications, setNotifications] = useState<Notification[]>([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [isOpen, setIsOpen] = useState(false)
 
@@ -28,8 +40,11 @@ export default function NotificationBell() {
                 .limit(30)
 
             if (data) {
-                setNotifications(data)
-                setUnreadCount(data.filter(n => !n.is_read).length)
+                // Cast the incoming data to our interface
+                const typedData = data as Notification[];
+                setNotifications(typedData)
+                // Explicitly type 'n' in the filter function
+                setUnreadCount(typedData.filter((n: Notification) => !n.is_read).length)
             }
 
             // 2. REAL-TIME LISTENER
@@ -39,7 +54,8 @@ export default function NotificationBell() {
                     'postgres_changes',
                     { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
                     (payload) => {
-                        setNotifications(prev => [payload.new, ...prev])
+                        const newNotification = payload.new as Notification;
+                        setNotifications(prev => [newNotification, ...prev])
                         setUnreadCount(prev => prev + 1)
                     }
                 )
@@ -72,7 +88,8 @@ export default function NotificationBell() {
 
             // Optimistic UI update (feels instant to the user)
             setUnreadCount(0)
-            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+            // Explicitly type 'n' here as well
+            setNotifications(prev => prev.map((n: Notification) => ({ ...n, is_read: true })))
 
             // Actual DB update
             await supabase
