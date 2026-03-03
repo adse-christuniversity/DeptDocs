@@ -10,21 +10,54 @@ import {
 
 import LivePreview from '@/components/LivePreview';
 
+// --- TYPESCRIPT INTERFACES ---
+interface ReportProfile {
+    id: string;
+    full_name: string;
+    department: string;
+}
+
+interface Report {
+    id: string;
+    title: string;
+    status: 'draft' | 'completed';
+    owner_id: string;
+    updated_at: string;
+    data: any; 
+    admin_feedback?: string;
+    profiles?: ReportProfile;
+}
+
+interface UserProfile {
+    id: string;
+    full_name: string;
+    email: string;
+    designation: string;
+    department: string;
+}
+
+interface ActivityLog {
+    id: string;
+    user_name: string;
+    description: string;
+    created_at: string;
+}
+
 export default function AdminDashboard() {
     const router = useRouter();
     const supabase = createClient();
 
-    // Added 'Drafts' and 'Delegation' tabs
+    // Added 'Drafts' and 'Delegation' tabs with explicit Types
     const [activeTab, setActiveTab] = useState<'Reports' | 'Drafts' | 'Delegation' | 'Feed'>('Reports');
-    const [logs, setLogs] = useState<any[]>([]);
-    const [profiles, setProfiles] = useState<any[]>([]);
-    const [completedReports, setCompletedReports] = useState<any[]>([]);
-    const [draftReports, setDraftReports] = useState<any[]>([]);
+    const [logs, setLogs] = useState<ActivityLog[]>([]);
+    const [profiles, setProfiles] = useState<UserProfile[]>([]);
+    const [completedReports, setCompletedReports] = useState<Report[]>([]);
+    const [draftReports, setDraftReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploadingId, setUploadingId] = useState<string | null>(null);
 
     // Modal & Reject States
-    const [previewReport, setPreviewReport] = useState<any | null>(null);
+    const [previewReport, setPreviewReport] = useState<Report | null>(null);
     const [isRejecting, setIsRejecting] = useState(false);
     const [rejectComment, setRejectComment] = useState("");
     const [processingReject, setProcessingReject] = useState(false);
@@ -41,10 +74,10 @@ export default function AdminDashboard() {
         setLoading(true);
         try {
             const { data: profilesData } = await supabase.from('profiles').select('*');
-            if (profilesData) setProfiles(profilesData);
+            if (profilesData) setProfiles(profilesData as UserProfile[]);
 
             const { data: logsData } = await supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(50);
-            if (logsData) setLogs(logsData);
+            if (logsData) setLogs(logsData as ActivityLog[]);
 
             // Fetch ALL reports, then filter in memory for quick tab switching
             const { data: reportsData } = await supabase
@@ -53,8 +86,10 @@ export default function AdminDashboard() {
                 .order('updated_at', { ascending: false });
 
             if (reportsData) {
-                setCompletedReports(reportsData.filter(r => r.status === 'completed'));
-                setDraftReports(reportsData.filter(r => r.status === 'draft'));
+                // Explicitly cast to Report[] so the compiler knows the structure
+                const typedReports = reportsData as Report[];
+                setCompletedReports(typedReports.filter((r: Report) => r.status === 'completed'));
+                setDraftReports(typedReports.filter((r: Report) => r.status === 'draft'));
             }
         } catch (error) {
             console.error("Error fetching admin data:", error);
@@ -96,6 +131,7 @@ export default function AdminDashboard() {
             alert("Please provide a reason for the revision.");
             return;
         }
+        if (!previewReport) return;
 
         setProcessingReject(true);
         try {
