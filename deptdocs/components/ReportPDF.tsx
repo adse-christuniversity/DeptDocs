@@ -80,8 +80,12 @@ const ExcelTable = ({ jsonData }: { jsonData: any[] }) => {
     );
 };
 
+// --- HELPER FUNCTIONS ---
+const hasData = (val: any) => val && val.toString().trim() !== "" && val !== "—";
+const hasArrayData = (arr: any[]) => arr && Array.isArray(arr) && arr.length > 0;
+
 const TableRow = ({ label, value, isLast = false }: { label: string, value: any, isLast?: boolean }) => {
-    if (!value || value.toString().trim() === "") return null;
+    if (!hasData(value)) return null;
     return (
         <View style={isLast ? styles.lastRow : styles.row} wrap={false}>
             <Text style={styles.labelCell}>{label}</Text>
@@ -109,8 +113,6 @@ const formatDate = (dateStr: string) => {
 };
 
 export const ReportPDF = ({ data }: { data: any }) => {
-    const hasData = (val: any) => val && val.toString().trim() !== "" && val !== "—";
-    const hasArrayData = (arr: any[]) => arr && Array.isArray(arr) && arr.length > 0;
 
     // --- 🐛 THE DATE & TIME FIX ---
     // Handle Dates
@@ -171,20 +173,22 @@ export const ReportPDF = ({ data }: { data: any }) => {
                 </View>
 
                 {/* 1. GENERAL INFORMATION */}
-                <View style={styles.section} wrap={false}>
-                    <Text style={styles.sectionTitle}>General Information</Text>
-                    <View style={styles.table}>
-                        <TableRow label="Title of the Activity" value={data.activityTitle} />
-                        <TableRow label="Activity Type" value={data.activityType} />
-                        <TableRow label="Sub Category" value={data.subCategory} />
-                        <TableRow label="Venue" value={data.venue} />
-                        <TableRow label="Collaboration/Sponsor" value={data.collaboration} />
+                {(hasData(data.activityTitle) || hasData(data.activityType) || hasData(data.venue) || hasData(dateDisplay) || hasData(timeDisplay)) && (
+                    <View style={styles.section} wrap={false}>
+                        <Text style={styles.sectionTitle}>General Information</Text>
+                        <View style={styles.table}>
+                            <TableRow label="Title of the Activity" value={data.activityTitle} />
+                            <TableRow label="Activity Type" value={data.activityType} />
+                            <TableRow label="Sub Category" value={data.subCategory} />
+                            <TableRow label="Venue" value={data.venue} />
+                            <TableRow label="Collaboration/Sponsor" value={data.collaboration} />
 
-                        {/* 👈 USING THE NEW FIXED VARIABLES HERE */}
-                        <TableRow label="Date/s" value={dateDisplay} />
-                        <TableRow label="Time" value={timeDisplay} isLast={true} />
+                            {/* 👈 USING THE NEW FIXED VARIABLES HERE */}
+                            <TableRow label="Date/s" value={dateDisplay} />
+                            <TableRow label="Time" value={timeDisplay} isLast={true} />
+                        </View>
                     </View>
-                </View>
+                )}
 
                 {/* 2. SPEAKER/GUEST DETAILS */}
                 {hasArrayData(data.speakers) && data.speakers.some((s: any) => hasData(s.name)) && (
@@ -203,7 +207,7 @@ export const ReportPDF = ({ data }: { data: any }) => {
                 )}
 
                 {/* 3. PARTICIPANTS PROFILE */}
-                {hasArrayData(data.participantProfiles || data.participantsProfile) && (
+                {(data.participantProfiles || data.participantsProfile || []).some((pt: any) => hasData(pt.count)) && (
                     <View style={styles.section} wrap={false}>
                         <Text style={styles.sectionTitle}>Participants profile</Text>
                         <View style={styles.table}>
@@ -222,15 +226,17 @@ export const ReportPDF = ({ data }: { data: any }) => {
                 )}
 
                 {/* 4. SYNOPSIS */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Synopsis of the Activity</Text>
-                    <View style={styles.table}>
-                        <TableRow label="Highlights" value={data.highlights} />
-                        <TableRow label="Key Takeaways" value={data.takeaways} />
-                        <TableRow label="Summary" value={data.summary} />
-                        <TableRow label="Follow-up plan" value={data.followUpPlan || data.followUp} isLast={true} />
+                {(hasData(data.highlights) || hasData(data.takeaways) || hasData(data.summary) || hasData(data.followUpPlan) || hasData(data.followUp)) && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Synopsis of the Activity</Text>
+                        <View style={styles.table}>
+                            <TableRow label="Highlights" value={data.highlights} />
+                            <TableRow label="Key Takeaways" value={data.takeaways} />
+                            <TableRow label="Summary" value={data.summary} />
+                            <TableRow label="Follow-up plan" value={data.followUpPlan || data.followUp} isLast={true} />
+                        </View>
                     </View>
-                </View>
+                )}
 
                 {/* 5. REPORT PREPARED BY */}
                 {hasArrayData(data.organizersList) && (
