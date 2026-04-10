@@ -70,7 +70,7 @@ graph TD
 
     Client -- POST /api/drive/upload --> API[Next.js API Route<br/>force-dynamic]
     API -- Service Role Key --> SupabaseDB
-    API -- renderToStream --> PDF[@react-pdf/renderer<br/>ReportPDF component]
+    API -- renderToStream --> PDF["@react-pdf/renderer<br/>ReportPDF component"]
     PDF --> API
     API -- Service Account --> Drive[Google Drive API]
     Drive -- fileId / webViewLink --> API
