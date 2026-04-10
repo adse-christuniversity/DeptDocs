@@ -207,23 +207,29 @@ export const ReportPDF = ({ data }: { data: any }) => {
                 )}
 
                 {/* 3. PARTICIPANTS PROFILE */}
-                {(data.participantProfiles || data.participantsProfile || []).some((pt: any) => hasData(pt.count)) && (
-                    <View style={styles.section} wrap={false}>
-                        <Text style={styles.sectionTitle}>Participants profile</Text>
-                        <View style={styles.table}>
-                            <View style={[styles.row, { backgroundColor: '#f9fafb' }]}>
-                                <Text style={[styles.halfLabelCell, { width: '50%' }]}>Type of Participants</Text>
-                                <Text style={[styles.halfLabelCell, { width: '50%', borderRight: 'none' }]}>No. of Participants</Text>
-                            </View>
-                            {(data.participantProfiles || data.participantsProfile).map((pt: any, idx: number) => (
-                                <View key={idx} style={idx === (data.participantProfiles || data.participantsProfile).length - 1 ? styles.lastRow : styles.row} wrap={false}>
-                                    <Text style={[styles.halfValueCell, { width: '50%', fontWeight: 'normal' }]}>{pt.type}</Text>
-                                    <Text style={[styles.lastHalfValueCell, { width: '50%' }]}>{pt.count}</Text>
+                {(() => {
+                    const validProfiles = (data.participantProfiles || data.participantsProfile || []).filter(
+                        (pt: any) => hasData(pt.type) && hasData(pt.count)
+                    );
+                    if (!hasArrayData(validProfiles)) return null;
+                    return (
+                        <View style={styles.section} wrap={false}>
+                            <Text style={styles.sectionTitle}>Participants profile</Text>
+                            <View style={styles.table}>
+                                <View style={[styles.row, { backgroundColor: '#f9fafb' }]}>
+                                    <Text style={[styles.halfLabelCell, { width: '50%' }]}>Type of Participants</Text>
+                                    <Text style={[styles.halfLabelCell, { width: '50%', borderRight: 'none' }]}>No. of Participants</Text>
                                 </View>
-                            ))}
+                                {validProfiles.map((pt: any, idx: number) => (
+                                    <View key={idx} style={idx === validProfiles.length - 1 ? styles.lastRow : styles.row} wrap={false}>
+                                        <Text style={[styles.halfValueCell, { width: '50%', fontWeight: 'normal' }]}>{pt.type}</Text>
+                                        <Text style={[styles.lastHalfValueCell, { width: '50%' }]}>{pt.count}</Text>
+                                    </View>
+                                ))}
+                            </View>
                         </View>
-                    </View>
-                )}
+                    );
+                })()}
 
                 {/* 4. SYNOPSIS */}
                 {(hasData(data.highlights) || hasData(data.takeaways) || hasData(data.summary) || hasData(data.followUpPlan) || hasData(data.followUp)) && (

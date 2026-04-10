@@ -25,32 +25,47 @@ export default function LoginPage() {
         e.preventDefault();
         setLoading(true);
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password,
-        });
+        try {
+            const { error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
 
-        if (error) {
-            alert(error.message);
+            if (error) {
+                alert(error.message);
+                setLoading(false);
+            } else {
+                router.push('/home');
+                router.refresh();
+            }
+        } catch (err) {
+            console.error("Login error:", err);
+            const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+            if (msg.includes("fetch")) {
+                alert("Network Error: Failed to reach the Supabase server. Check your connection.");
+            } else {
+                alert(msg);
+            }
             setLoading(false);
-        } else {
-            // Redirecting to home for DeptDocs users
-            router.push('/home');
-            router.refresh();
         }
     };
 
     // 4. Google OAuth Login Logic
     const handleGoogleLogin = async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                },
+            });
 
-        if (error) {
-            alert(error.message);
+            if (error) {
+                alert(error.message);
+            }
+        } catch (err) {
+            console.error("Google login error:", err);
+            alert("An error occurred during Google login.");
         }
     };
 

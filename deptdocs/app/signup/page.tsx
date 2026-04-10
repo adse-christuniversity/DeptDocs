@@ -35,26 +35,37 @@ export default function SignupPage() {
         }
 
         setLoading(true);
-        const { error } = await supabase.auth.signUp({
-            email: formData.email,
-            password: formData.password,
-            options: {
-                // Storing additional metadata (names/phone) in Supabase
-                data: {
-                    first_name: formData.firstName,
-                    last_name: formData.lastName,
-                    phone_number: formData.phone
+        try {
+            const { error } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    // Storing additional metadata (names/phone) in Supabase
+                    data: {
+                        first_name: formData.firstName,
+                        last_name: formData.lastName,
+                        phone_number: formData.phone
+                    },
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 },
-                emailRedirectTo: `${window.location.origin}/auth/callback`,
-            },
-        });
+            });
 
-        if (error) {
-            alert(error.message);
+            if (error) {
+                alert(error.message);
+                setLoading(false);
+            } else {
+                alert("Please check your email to confirm your account!");
+                router.push('/login');
+            }
+        } catch (err) {
+            console.error("Signup error:", err);
+            const msg = err instanceof Error ? err.message : "An unexpected error occurred.";
+            if (msg.includes("fetch")) {
+                alert("Network Error: Failed to reach the Supabase server. Check your internet connection or disable ad-blockers for this site.");
+            } else {
+                alert(msg);
+            }
             setLoading(false);
-        } else {
-            alert("Please check your email to confirm your account!");
-            router.push('/login');
         }
     };
 
