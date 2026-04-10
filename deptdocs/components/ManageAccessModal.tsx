@@ -95,7 +95,7 @@ export default function ManageAccessModal({ isOpen, onClose, reportId }: ManageA
                     report_id: reportId,
                     user_id: targetUser.id,
                     role: 'Editor', // Default role
-                    status: 'pending'
+                    status: 'accepted'
                 });
 
             if (insertError) {

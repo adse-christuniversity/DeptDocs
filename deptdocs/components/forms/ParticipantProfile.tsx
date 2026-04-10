@@ -6,8 +6,7 @@ import { PlusCircle, Trash2, ChevronRight, Users } from 'lucide-react';
 const PARTICIPANT_TYPES = ["Faculty", "Student", "Research Scholar", "Others"];
 
 export default function ParticipantProfile({ data, onUpdate, onNext }: any) {
-    // Initialize with one group if empty
-    const profiles = data.participantsProfile || [
+    const profiles = data.participantProfiles || [
         { id: Date.now(), type: '', count: '' }
     ];
 
@@ -15,12 +14,12 @@ export default function ParticipantProfile({ data, onUpdate, onNext }: any) {
         const updated = profiles.map((p: any) =>
             p.id === id ? { ...p, [field]: value } : p
         );
-        onUpdate({ participantsProfile: updated });
+        onUpdate({ participantProfiles: updated });
     };
 
     const addProfile = () => {
         onUpdate({
-            participantsProfile: [
+            participantProfiles: [
                 ...profiles,
                 { id: Date.now(), type: '', count: '' }
             ]
@@ -29,7 +28,7 @@ export default function ParticipantProfile({ data, onUpdate, onNext }: any) {
 
     const removeProfile = (id: number) => {
         if (profiles.length > 1) {
-            onUpdate({ participantsProfile: profiles.filter((p: any) => p.id !== id) });
+            onUpdate({ participantProfiles: profiles.filter((p: any) => p.id !== id) });
         }
     };
 

@@ -50,12 +50,11 @@ export default function OpenFileDashboard() {
 
             if (ownedError) console.error("Error fetching owned reports:", ownedError);
 
-            // 2. Fetch shared reports (Filtering for 'accepted' status)
+            // 2. Fetch shared reports (Filtering for status is removed so all shared reports show up instantly)
             const { data: sharedData, error: sharedError } = await supabase
                 .from('collaborators')
                 .select('reports(*)')
-                .eq('user_id', user.id)
-                .eq('status', 'accepted'); // Only show it if they accepted the invite
+                .eq('user_id', user.id);
 
             if (sharedError) console.error("Error fetching shared reports:", sharedError);
 

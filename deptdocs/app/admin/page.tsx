@@ -106,7 +106,7 @@ export default function AdminDashboard() {
     const handlePushToDrive = async (reportId: string) => {
         setUploadingId(reportId);
         try {
-            const response = await fetch('/api/drive/push', {
+            const response = await fetch('/api/drive/upload', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reportId })

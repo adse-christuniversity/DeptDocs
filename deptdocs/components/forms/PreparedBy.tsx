@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, CheckCircle2, Upload } from 'lucide-react';
 
 // Adjust this import path based on your Next.js project structure
@@ -8,9 +8,6 @@ import { createClient } from '@/utils/supabase/client';
 
 export default function PreparedBy({ data, onUpdate, onNext }: any) {
     const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
-    const [uploadError, setUploadError] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Initialize organizersList if not exists, focusing on the first element for this single-step form
     const organizers = data.organizersList || [
@@ -80,50 +77,6 @@ export default function PreparedBy({ data, onUpdate, onNext }: any) {
         }
     };
 
-    const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-
-        setUploading(true);
-        setUploadError(null);
-
-        try {
-            const supabase = createClient();
-
-            const { data: { user }, error: authError } = await supabase.auth.getUser();
-            if (authError || !user) throw new Error("User not authenticated");
-
-            const fileExt = file.name.split('.').pop();
-            const filePath = `${user.id}-${Math.random()}.${fileExt}`;
-
-            const { error: uploadErr } = await supabase.storage
-                .from('signatures')
-                .upload(filePath, file);
-
-            if (uploadErr) throw uploadErr;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('signatures')
-                .getPublicUrl(filePath);
-
-            const updated = [...organizers];
-            updated[0] = { ...updated[0], signatureImage: publicUrl };
-            onUpdate({ organizersList: updated });
-        } catch (err: any) {
-            console.error("Signature upload error:", err);
-            setUploadError(err.message || "Failed to upload signature.");
-        } finally {
-            setUploading(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
-        }
-    };
-
-    const handleRemoveSignature = () => {
-        const updated = [...organizers];
-        updated[0] = { ...updated[0], signatureImage: '' };
-        onUpdate({ organizersList: updated });
-    };
-
     const handleToggleCollaborators = (checked: boolean) => {
         onUpdate({ useCollaborators: checked });
     };
@@ -162,39 +115,16 @@ export default function PreparedBy({ data, onUpdate, onNext }: any) {
                 {/* Digital Signature Display */}
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-700">Digital Signature</label>
-                    <div
-                        onClick={() => !uploading && !organizers[0].signatureImage && fileInputRef.current?.click()}
-                        className={`border-2 border-dashed rounded-2xl p-10 flex flex-col items-center justify-center transition-all ${organizers[0].signatureImage ? 'border-green-300 bg-green-50/30' : 'border-gray-200 bg-gray-50/30 cursor-pointer hover:border-[#3b5998] hover:bg-blue-50/40'}`}
-                    >
-                        <input
-                            type="file"
-                            hidden
-                            ref={fileInputRef}
-                            accept="image/*"
-                            onChange={handleSignatureUpload}
-                        />
-
+                    <div className="border-2 border-dashed border-gray-100 rounded-2xl p-10 flex flex-col items-center justify-center bg-gray-50/30">
                         {organizers[0].signatureImage ? (
                             <div className="flex flex-col items-center text-[#3b5998]">
                                 <CheckCircle2 size={32} className="mb-2" />
                                 <span className="text-xs font-bold uppercase tracking-wider">Signature Loaded</span>
-                                <button
-                                    type="button"
-                                    onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); handleRemoveSignature(); }}
-                                    className="mt-2 text-xs text-red-500 hover:underline font-bold"
-                                >
-                                    Remove
-                                </button>
                             </div>
                         ) : (
                             <div className="flex flex-col items-center">
-                                <button
-                                    type="button"
-                                    disabled={uploading}
-                                    onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                                    className="bg-[#4F65F6] text-white px-6 py-2 rounded-full font-bold text-xs mb-4 hover:bg-[#3b5998] transition-colors disabled:opacity-60"
-                                >
-                                    {uploading ? "Uploading..." : "Upload"}
+                                <button className="bg-[#4F65F6] text-white px-6 py-2 rounded-full font-bold text-xs mb-4 hover:bg-[#3b5998] transition-colors">
+                                    Upload
                                 </button>
                                 <p className="text-xs text-gray-400 text-center">
                                     Click to browse or <br /> drag and drop your files
@@ -202,9 +132,6 @@ export default function PreparedBy({ data, onUpdate, onNext }: any) {
                             </div>
                         )}
                     </div>
-                    {uploadError && (
-                        <p className="text-xs text-red-500 font-medium">{uploadError}</p>
-                    )}
                 </div>
 
                 {/* Checkbox Options */}

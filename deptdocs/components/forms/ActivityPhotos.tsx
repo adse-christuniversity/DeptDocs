@@ -2,13 +2,16 @@
 
 import React, { useState } from 'react';
 import { ChevronRight, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { createClient } from '@/utils/supabase/client';
 
-export default function ActivityPhotos({ data, onUpdate, onNext }: any) {
+export default function ActivityPhotos({ data, onUpdate, onNext, reportId }: any) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [dragActive, setDragActive] = useState(false);
 
     // Use existing photos from master state or start with an empty array
     const photos = data.activityPhotos || [];
+
+    const supabase = createClient();
 
     // Handle Drag Events for styling
     const handleDrag = (e: React.DragEvent) => {
@@ -21,7 +24,7 @@ export default function ActivityPhotos({ data, onUpdate, onNext }: any) {
         }
     };
 
-    // Handle Real File Upload and Base64 Conversion
+    // Handle Real File Upload to Supabase instead of Base64
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent) => {
         e.preventDefault();
         setDragActive(false);
@@ -43,15 +46,19 @@ export default function ActivityPhotos({ data, onUpdate, onNext }: any) {
 
         try {
             const processedPhotos = await Promise.all(imageFiles.map(async (file) => {
-                const base64String = await new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result as string);
-                    reader.readAsDataURL(file);
-                });
+                const folder = reportId || 'temp_uploads';
+                const filePath = `${folder}/activityPhotos/${Date.now()}_${file.name}`;
+                
+                const { error } = await supabase.storage.from('reports').upload(filePath, file);
+                if (error) throw error;
+                
+                const { data: { publicUrl } } = supabase.storage.from('reports').getPublicUrl(filePath);
 
                 return {
                     id: Math.random().toString(36).substring(7),
-                    url: base64String, // PDF engine needs this base64 string
+                    name: file.name,
+                    type: file.type,
+                    url: publicUrl,
                     caption: ''        // Start with an empty caption
                 };
             }));
@@ -61,7 +68,7 @@ export default function ActivityPhotos({ data, onUpdate, onNext }: any) {
 
         } catch (error) {
             console.error("Error processing images:", error);
-            alert("Failed to process some images.");
+            alert("Failed to upload some images to storage.");
         } finally {
             setIsProcessing(false);
         }

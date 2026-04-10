@@ -32,7 +32,6 @@ export default function DashboardPage() {
             try {
                 const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-                // Security Check: Kick out unauthenticated users
                 if (authError || !user) {
                     router.push('/');
                     return;

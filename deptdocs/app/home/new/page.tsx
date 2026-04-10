@@ -119,6 +119,42 @@ function ReportEditorContent() {
         }
     }, [existingId, supabase]);
 
+    // --- AUTO-SAVE ---
+    useEffect(() => {
+        if (!isInitialLoadDone) return;
+        
+        const timeoutId = setTimeout(() => {
+            if (reportData.activityTitle !== '' || reportId) {
+                handleSaveDraft(reportData, true);
+            }
+        }, 3000); // 3 second debounce
+
+        return () => clearTimeout(timeoutId);
+    }, [reportData, isInitialLoadDone, reportId]);
+
+    // --- REALTIME SYNC ---
+    useEffect(() => {
+        if (!reportId) return;
+
+        const channel = supabase
+            .channel(`report_${reportId}`)
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'reports', filter: `id=eq.${reportId}` }, (payload: any) => {
+                const newData = payload.new.data;
+                setReportData((prev) => {
+                    if (JSON.stringify(prev) !== JSON.stringify(newData)) {
+                        return { ...prev, ...newData };
+                    }
+                    return prev;
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [reportId, supabase]);
+
+
     const handleDataUpdate = (newData: any) => {
         setReportData((prev) => ({ ...prev, ...newData }));
     };
@@ -152,15 +188,15 @@ function ReportEditorContent() {
     };
 
     // --- 1. DRAFT SAVE FUNCTION ---
-    const handleSaveDraft = async (currentData: any) => {
+    const handleSaveDraft = async (currentData: any, isAutoSave = false) => {
         if (!isInitialLoadDone) return; // 🛑 Safety check to prevent saving empty data
-        setIsSaving(true);
+        if (!isAutoSave) setIsSaving(true);
 
         try {
             const { data: { user }, error: authError } = await supabase.auth.getUser();
 
             if (authError || !user) {
-                alert("You must be logged in to save drafts.");
+                if (!isAutoSave) alert("You must be logged in to save drafts.");
                 setIsSaving(false);
                 return;
             }
@@ -168,7 +204,7 @@ function ReportEditorContent() {
             const reportTitle = currentData.activityTitle?.trim() || "Untitled Report";
 
             if (reportId) {
-                // UPDATE existing draft - ❌ REMOVED owner_id to prevent hijacking
+                // UPDATE existing draft
                 const { error } = await supabase
                     .from('reports')
                     .update({
@@ -179,11 +215,13 @@ function ReportEditorContent() {
                     .eq('id', reportId);
 
                 if (error) throw error;
-                await logActivity('REPORT_SAVED', `Saved draft: ${reportTitle}`, reportId);
-                alert("Draft updated successfully!");
+                if (!isAutoSave) {
+                    await logActivity('REPORT_SAVED', `Saved draft: ${reportTitle}`, reportId);
+                    alert("Draft updated successfully!");
+                }
 
             } else {
-                // INSERT new draft - ✅ owner_id only set on creation
+                // INSERT new draft
                 const { data, error } = await supabase
                     .from('reports')
                     .insert([{
@@ -198,26 +236,22 @@ function ReportEditorContent() {
                 if (error) throw error;
                 if (data) {
                     setReportId(data.id);
-                    await logActivity('REPORT_SAVED', `Saved draft: ${reportTitle}`, data.id);
+                    if (!isAutoSave) await logActivity('REPORT_SAVED', `Saved draft: ${reportTitle}`, data.id);
                 }
-                alert("New draft saved successfully!");
+                if (!isAutoSave) alert("New draft saved successfully!");
             }
 
         } catch (error: any) {
             console.error("Error saving draft:", error.message);
-            alert("Failed to save draft. Please try again.");
+            if (!isAutoSave) alert("Failed to save draft. Please try again.");
         } finally {
-            setIsSaving(false);
+            if (!isAutoSave) setIsSaving(false);
         }
     };
 
     // --- 2. SUBMIT FUNCTION ---
     const handleMarkCompleted = async (currentData: any) => {
         if (!isInitialLoadDone) return; // 🛑 Safety check
-
-        if (!confirm("Are you sure you want to submit this report for admin review? You will not be able to edit it once submitted.")) {
-            return;
-        }
 
         setIsSaving(true);
         try {
@@ -230,7 +264,7 @@ function ReportEditorContent() {
             const reportTitle = currentData.activityTitle?.trim() || "Untitled Report";
 
             if (reportId) {
-                // UPDATE existing draft - ❌ REMOVED owner_id to prevent hijacking
+                // UPDATE existing draft
                 const { error } = await supabase
                     .from('reports')
                     .update({
@@ -263,11 +297,11 @@ function ReportEditorContent() {
             }
 
             alert("Report successfully submitted for review!");
-            router.push('/home'); // Redirect to dashboard after submitting
+            router.push('/home');
 
         } catch (error: any) {
-            console.error("Error submitting report:", error.message);
-            alert("Failed to submit report.");
+            console.error("Error submitting report:", error);
+            alert(`Failed to submit report.\n\nReason: ${error?.message || JSON.stringify(error)}`);
         } finally {
             setIsSaving(false);
         }
@@ -383,6 +417,7 @@ function ReportEditorContent() {
                         {/* 7. Activity Photos */}
                         {activeSection === 'Activity Photos' && (
                             <ActivityPhotos
+                                reportId={reportId}
                                 data={reportData}
                                 onUpdate={handleDataUpdate}
                                 onNext={() => setActiveSection('Attendance List')}
