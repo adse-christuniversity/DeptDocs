@@ -19,6 +19,8 @@ import AttendanceList from '@/components/forms/AttendanceList';
 import Brochure from '@/components/forms/Brochure';
 import NoticeApproval from '@/components/forms/NoticeApproval';
 import FeedbackAnalysis from '@/components/forms/FeedbackAnalysis';
+import SubmissionModal from '@/components/SubmissionModal';
+import SaveConfirmationModal from '@/components/SaveConfirmationModal';
 
 import {
     FileText,
@@ -49,6 +51,10 @@ function ReportEditorContent() {
 
     // Toggle state between Form Editor and Asset Manager Views
     const [viewMode, setViewMode] = useState<'editor' | 'assets'>('editor');
+
+    // Submission Modal State
+    const [showSubmissionModal, setShowSubmissionModal] = useState(false);
+    const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
 
     // State to track the active sidebar section
     const [activeSection, setActiveSection] = useState('General Information');
@@ -329,6 +335,8 @@ function ReportEditorContent() {
             previewData={reportData}
             onSaveDraft={handleSaveDraft}
             onMarkCompleted={handleMarkCompleted}
+            onRequestSubmit={() => setShowSubmissionModal(true)}
+            onRequestSave={() => setShowSaveConfirmation(true)}
             reportId={reportId}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -456,12 +464,28 @@ function ReportEditorContent() {
                             <FeedbackAnalysis
                                 data={reportData}
                                 onUpdate={handleDataUpdate}
-                                onFinish={() => handleMarkCompleted(reportData)}
+                                onFinish={() => setShowSubmissionModal(true)}
+                                onSave={() => setShowSaveConfirmation(true)}
                             />
                         )}
                     </div>
                 )}
             </div>
+
+            <SubmissionModal
+                isOpen={showSubmissionModal}
+                onClose={() => setShowSubmissionModal(false)}
+                onConfirmSubmit={() => handleMarkCompleted(reportData)}
+                onConfirmSave={() => handleSaveDraft(reportData)}
+                reportTitle={reportData.activityTitle}
+            />
+
+            <SaveConfirmationModal
+                isOpen={showSaveConfirmation}
+                onClose={() => setShowSaveConfirmation(false)}
+                onConfirm={() => handleSaveDraft(reportData)}
+                reportTitle={reportData.activityTitle}
+            />
         </ReportLayout>
     );
 }

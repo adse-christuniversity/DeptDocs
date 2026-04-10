@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState } from 'react';
-import { ChevronRight, Upload, X, BarChart3, FileText, Image as ImageIcon } from 'lucide-react';
+import { ChevronRight, Upload, X, BarChart3, FileText, Image as ImageIcon, Save } from 'lucide-react';
 
-export default function FeedbackAnalysis({ data, onUpdate, onFinish }: any) {
+export default function FeedbackAnalysis({ data, onUpdate, onFinish, onSave }: any) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [dragActive, setDragActive] = useState(false);
 
@@ -193,12 +193,19 @@ export default function FeedbackAnalysis({ data, onUpdate, onFinish }: any) {
                 )}
             </div>
 
-            <div className="flex justify-end pt-6">
+            <div className="flex justify-end items-center gap-4 pt-6">
+                <button
+                    onClick={onSave}
+                    className="flex-1 max-w-[180px] bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-all active:scale-95 border border-gray-200"
+                >
+                    <Save size={18} />
+                    <span>Save Draft</span>
+                </button>
                 <button
                     onClick={onFinish}
-                    className="bg-green-600 text-white px-12 py-3 rounded-lg font-bold flex items-center space-x-2 hover:bg-green-700 transition-all shadow-md active:scale-95"
+                    className="flex-1 bg-green-600 text-white px-12 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-all shadow-md active:scale-95"
                 >
-                    <span>Finish & Generate Report</span>
+                    <span>Finish & Submit</span>
                     <ChevronRight size={18} />
                 </button>
             </div>

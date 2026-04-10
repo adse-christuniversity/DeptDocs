@@ -24,6 +24,8 @@ interface Props {
     previewData: any;
     onSaveDraft?: (data: any) => void;
     onMarkCompleted?: (data: any) => void;
+    onRequestSubmit?: () => void;
+    onRequestSave?: () => void;
     reportId?: string | null;
 
     // NEW PROPS FOR TOGGLE TABS (File | Insert)
@@ -39,6 +41,8 @@ export default function ReportLayout({
     previewData,
     onSaveDraft,
     onMarkCompleted,
+    onRequestSubmit,
+    onRequestSave,
     reportId,
     viewMode = 'editor',
     onViewModeChange
@@ -50,7 +54,6 @@ export default function ReportLayout({
     const [showDownloadMenu, setShowDownloadMenu] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [user, setUser] = useState<any>(null);
 
     // Fetch user on mount for logging
@@ -110,8 +113,8 @@ export default function ReportLayout({
                 <button onClick={() => router.push('/home/open')} className="text-white/60 hover:text-white transition-colors" title="Reports"><FolderOpen size={24} /></button>
 
                 {/* Logged Action Buttons */}
-                <button onClick={() => handleActionWithLog('SAVE')} className="text-white/60 hover:text-white transition-colors" title="Save Draft"><Save size={24} /></button>
-                <button onClick={() => setShowConfirmModal(true)} className="text-white/60 hover:text-green-400 transition-colors" title="Submit Report"><CheckCircle size={24} /></button>
+                <button onClick={() => onRequestSave ? onRequestSave() : handleActionWithLog('SAVE')} className="text-white/60 hover:text-white transition-colors" title="Save Draft"><Save size={24} /></button>
+                <button onClick={() => onRequestSubmit ? onRequestSubmit() : onMarkCompleted && onMarkCompleted(previewData)} className="text-white/60 hover:text-green-400 transition-colors" title="Submit Report"><CheckCircle size={24} /></button>
                 <button onClick={() => setShowCollabModal(true)} className="text-white/60 hover:text-white transition-colors" title="Collab"><UserPlus size={24} /></button>
 
                 <div className="relative flex flex-col items-center">
@@ -230,76 +233,6 @@ export default function ReportLayout({
 
             <ManageAccessModal isOpen={showCollabModal} onClose={() => setShowCollabModal(false)} reportId={reportId} />
 
-            {/* ✅ SUBMISSION CONFIRMATION MODAL */}
-            {showConfirmModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 animate-in fade-in zoom-in-95">
-                        <div className="flex justify-between items-start mb-6">
-                            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
-                                <AlertCircle size={24} className="text-[#3168d8]" />
-                            </div>
-                            <button onClick={() => setShowConfirmModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Ready to submit?</h2>
-                        <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-                            Choose how you'd like to proceed with <span className="font-semibold text-gray-700">"{previewData.activityTitle || 'this report'}"</span>.
-                        </p>
-
-                        <div className="space-y-3">
-                            {/* Submit to Admin */}
-                            <button
-                                onClick={() => {
-                                    setShowConfirmModal(false);
-                                    handleActionWithLog('COMPLETE');
-                                }}
-                                className="w-full flex items-center justify-between bg-[#112a53] hover:bg-[#1a3a6e] text-white px-6 py-4 rounded-2xl transition-all group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center">
-                                        <CheckCircle size={18} />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-bold text-sm">Submit to Admin</p>
-                                        <p className="text-white/60 text-xs">Finalize and send for review</p>
-                                    </div>
-                                </div>
-                                <span className="text-white/40 group-hover:text-white transition-colors text-lg">→</span>
-                            </button>
-
-                            {/* Save as Draft */}
-                            <button
-                                onClick={() => {
-                                    setShowConfirmModal(false);
-                                    handleActionWithLog('SAVE');
-                                }}
-                                className="w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 text-gray-700 px-6 py-4 rounded-2xl border border-gray-200 transition-all group"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 bg-gray-200 rounded-xl flex items-center justify-center">
-                                        <Save size={18} className="text-gray-500" />
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-bold text-sm">Save as Draft</p>
-                                        <p className="text-gray-400 text-xs">Keep editing and come back later</p>
-                                    </div>
-                                </div>
-                                <span className="text-gray-300 group-hover:text-gray-500 transition-colors text-lg">→</span>
-                            </button>
-
-                            {/* Cancel */}
-                            <button
-                                onClick={() => setShowConfirmModal(false)}
-                                className="w-full text-center text-sm text-gray-400 hover:text-gray-600 py-2 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
